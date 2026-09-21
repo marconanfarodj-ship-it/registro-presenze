@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accesso amministratore — Registro Presenze</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap narrow">
+    <div class="glass card">
+      <div class="logo-mark">🔑</div>
+      <h1>Accesso amministratore</h1>
+      <p class="subtitle" style="margin-bottom:18px;">Inserisci la password per gestire presenze e tariffe.</p>
+      <form method="POST" action="/admin/login">
+        <input type="password" name="password" placeholder="Password" required autofocus>
+        <button class="btn" type="submit">Entra</button>
+      </form>
+      <% if (error) { %><p class="error-msg"><%= error %></p><% } %>
+      <p class="link-row"><a href="/">← torna alla scelta</a></p>
+    </div>
+  </div>
+</body>
+</html>

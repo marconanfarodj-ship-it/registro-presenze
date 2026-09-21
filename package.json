@@ -1,0 +1,22 @@
+{
+  "name": "registro-presenze-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Registro presenze con backend: dashboard admin (tariffe/totali) e vista dipendente in sola lettura (senza prezzi), login dipendente via link magico (Resend).",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
