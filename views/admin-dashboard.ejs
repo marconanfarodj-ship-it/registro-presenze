@@ -27,6 +27,11 @@
   </header>
 
   <div class="toolbar glass">
+    <% if (restoreError) { %>
+      <div style="width:100%; background: rgba(230,90,60,0.18); border:1px solid var(--accent-a); color: var(--accent-a); padding:10px 14px; border-radius:10px; font-size:0.85rem;">
+        Il file caricato non è un backup valido per questa versione dell'app (potrebbe essere di una versione precedente). Nessun dato è stato modificato.
+      </div>
+    <% } %>
     <div class="legend">
       <span><span class="swatch" style="background:var(--accent-p-bg); box-shadow: inset 0 0 0 1px var(--accent-p);"></span>Presente</span>
       <span><span class="swatch" style="background:var(--accent-a-bg); box-shadow: inset 0 0 0 1px var(--accent-a);"></span>Assente</span>
@@ -71,27 +76,27 @@
         <tr>
           <td class="name-col">
             <div class="emp-name-row">
-              <div>
-                <div class="emp-name"><%= r.emp.name %></div>
-                <div class="emp-email"><%= r.emp.email %></div>
+              <div style="flex:1;">
+                <form method="POST" action="/admin/employees/<%= r.emp.id %>/update?y=<%= y %>&m=<%= m0+1 %>" style="display:flex; flex-direction:column; gap:3px;">
+                  <input type="text" name="name" value="<%= r.emp.name %>" class="rate-input" style="width:100%; font-weight:600; font-size:0.82rem;" required>
+                  <input type="email" name="email" value="<%= r.emp.email %>" class="rate-input" style="width:100%; font-size:0.68rem;" required>
+                  <div class="rate-row">
+                    <div class="rate-field">
+                      <label>Lun–Ven €</label>
+                      <input class="rate-input" type="number" name="rateWeek" step="0.01" min="0" value="<%= r.emp.rate_week %>">
+                    </div>
+                    <div class="rate-field">
+                      <label>Sab/Dom €</label>
+                      <input class="rate-input" type="number" name="rateWeekend" step="0.01" min="0" value="<%= r.emp.rate_weekend %>">
+                    </div>
+                    <button class="rate-save" type="submit" title="Salva">💾</button>
+                  </div>
+                </form>
               </div>
               <form class="inline" method="POST" action="/admin/employees/<%= r.emp.id %>/delete?y=<%= y %>&m=<%= m0+1 %>" onsubmit="return confirm('Rimuovere questo dipendente e tutte le sue presenze?');">
                 <button class="del-btn" type="submit" title="Rimuovi">✕</button>
               </form>
             </div>
-            <form class="rate-row" method="POST" action="/admin/employees/<%= r.emp.id %>/update?y=<%= y %>&m=<%= m0+1 %>">
-              <input type="hidden" name="name" value="<%= r.emp.name %>">
-              <input type="hidden" name="email" value="<%= r.emp.email %>">
-              <div class="rate-field">
-                <label>Lun–Ven €</label>
-                <input class="rate-input" type="number" name="rateWeek" step="0.01" min="0" value="<%= r.emp.rate_week %>">
-              </div>
-              <div class="rate-field">
-                <label>Sab/Dom €</label>
-                <input class="rate-input" type="number" name="rateWeekend" step="0.01" min="0" value="<%= r.emp.rate_weekend %>">
-              </div>
-              <button class="rate-save" type="submit" title="Salva tariffe">💾</button>
-            </form>
           </td>
           <% r.days.forEach(function(d){ %>
             <td class="<%= d.weekend ? 'weekend' : '' %>">
