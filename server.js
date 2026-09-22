@@ -3,6 +3,9 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
 const path = require("path");
+const multer = require("multer");
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const store = require("./db");
 const auth = require("./auth");
@@ -241,6 +244,48 @@ app.get("/me", auth.requireEmployee, (req, res) => {
     prev, next,
   });
 });
+
+app.get("/admin/backup", auth.requireAdmin, (req, res) => {
+  const employees = store.listEmployees();
+  const attendance = store.getAllAttendanceRows();
+  const payload = {
+    type: "registro-presenze-backup",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    employees,
+    attendance,
+  };
+  const today = new Date();
+  const fname = `backup-presenze-${today.getFullYear()}${du.pad(
+    today.getMonth() + 1
+  )}${du.pad(today.getDate())}.json`;
+
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Content-Disposition", `attachment; filename="${fname}"`);
+  res.send(JSON.stringify(payload, null, 2));
+});
+
+app.post(
+  "/admin/restore",
+  auth.requireAdmin,
+  upload.single("backupFile"),
+  (req, res) => {
+    if (!req.file) {
+      return res.redirect(backToMonth(req));
+    }
+    try {
+      const parsed = JSON.parse(req.file.buffer.toString("utf-8"));
+      if (!parsed || !Array.isArray(parsed.employees) || !Array.isArray(parsed.attendance)) {
+        throw new Error("Formato di backup non valido");
+      }
+      store.restoreAll({ employees: parsed.employees, attendance: parsed.attendance });
+    } catch (err) {
+      console.error("Ripristino fallito:", err.message);
+      // In caso di file non valido, semplicemente non tocchiamo i dati esistenti.
+    }
+    res.redirect(backToMonth(req));
+  }
+);
 
 // ---------- Avvio ----------
 const PORT = process.env.PORT || 3000;

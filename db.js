@@ -104,4 +104,36 @@ module.exports = {
        ON CONFLICT(employee_id, date) DO UPDATE SET status = excluded.status`
     ).run(employeeId, date, status);
   },
+
+  getAllAttendanceRows() {
+    return db.prepare("SELECT employee_id, date, status FROM attendance").all();
+  },
+
+  restoreAll({ employees, attendance }) {
+    const tx = db.transaction(() => {
+      db.prepare("DELETE FROM attendance").run();
+      db.prepare("DELETE FROM employees").run();
+
+      const insertEmp = db.prepare(
+        `INSERT INTO employees (id, name, email, rate_week, rate_weekend) VALUES (?, ?, ?, ?, ?)`
+      );
+      for (const e of employees) {
+        insertEmp.run(
+          e.id,
+          e.name,
+          e.email,
+          Number(e.rate_week) || 0,
+          Number(e.rate_weekend) || 0
+        );
+      }
+
+      const insertAtt = db.prepare(
+        `INSERT INTO attendance (employee_id, date, status) VALUES (?, ?, ?)`
+      );
+      for (const a of attendance) {
+        insertAtt.run(a.employee_id, a.date, a.status);
+      }
+    });
+    tx();
+  },
 };

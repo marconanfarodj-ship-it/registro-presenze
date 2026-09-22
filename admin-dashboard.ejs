@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard amministratore — Registro Presenze</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="glass">
+    <div class="brand">
+      <div class="logo-mark">📋</div>
+      <div>
+        <h1>Registro presenze — amministratore</h1>
+        <p class="subtitle">Clicca su una casella per far cambiare stato: — → Presente → Assente → Ferie → Malattia</p>
+      </div>
+    </div>
+    <div>
+      <div class="month-nav">
+        <a class="nav-btn" href="/admin?y=<%= prev.y %>&m=<%= prev.m %>">‹</a>
+        <span class="label"><%= monthLabel %></span>
+        <a class="nav-btn" href="/admin?y=<%= next.y %>&m=<%= next.m %>">›</a>
+      </div>
+      <p class="link-row" style="margin-top:6px;"><a href="/admin/logout">esci</a></p>
+    </div>
+  </header>
+
+  <div class="toolbar glass">
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--accent-p-bg); box-shadow: inset 0 0 0 1px var(--accent-p);"></span>Presente</span>
+      <span><span class="swatch" style="background:var(--accent-a-bg); box-shadow: inset 0 0 0 1px var(--accent-a);"></span>Assente</span>
+      <span><span class="swatch" style="background:var(--accent-f-bg); box-shadow: inset 0 0 0 1px var(--accent-f);"></span>Ferie</span>
+      <span><span class="swatch" style="background:var(--accent-m-bg); box-shadow: inset 0 0 0 1px var(--accent-m);"></span>Malattia</span>
+    </div>
+    <div class="add-row">
+      <a class="btn ghost" href="/admin/backup">⭳ Backup</a>
+      <form class="inline" method="POST" action="/admin/restore?y=<%= y %>&m=<%= m0+1 %>" enctype="multipart/form-data" onsubmit="return confirm('Ripristinare questo backup sostituirà TUTTI i dati attuali (dipendenti e presenze). Continuare?');">
+        <label class="btn ghost" style="cursor:pointer;">
+          ⭱ Ripristina
+          <input type="file" name="backupFile" accept="application/json,.json" style="display:none;" onchange="this.form.submit()">
+        </label>
+      </form>
+      <form class="inline add-row" method="POST" action="/admin/employees?y=<%= y %>&m=<%= m0+1 %>">
+        <input type="text" name="name" placeholder="Nome dipendente" required maxlength="60">
+        <input type="email" name="email" placeholder="Email dipendente" required maxlength="120">
+        <input type="number" name="rateWeek" placeholder="€ Lun–Ven" step="0.01" min="0" style="width:100px;">
+        <input type="number" name="rateWeekend" placeholder="€ Sab/Dom" step="0.01" min="0" style="width:100px;">
+        <button class="btn" type="submit">Aggiungi</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="glass table-shell">
+    <% if (employees.length === 0) { %>
+      <div class="empty-state"><p>Nessun dipendente ancora. Aggiungine uno per iniziare.</p></div>
+    <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th class="name-col">Dipendente / tariffe</th>
+          <% headerDays.forEach(function(hd){ %>
+            <th class="<%= hd.weekend ? 'weekend' : '' %>"><span class="dow"><%= hd.dow %></span><%= hd.day %></th>
+          <% }) %>
+          <th>P</th><th>A</th><th>F</th><th>M</th>
+          <th style="border-left:1px solid var(--line);">Da pagare</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function(r){ %>
+        <tr>
+          <td class="name-col">
+            <div class="emp-name-row">
+              <div>
+                <div class="emp-name"><%= r.emp.name %></div>
+                <div class="emp-email"><%= r.emp.email %></div>
+              </div>
+              <form class="inline" method="POST" action="/admin/employees/<%= r.emp.id %>/delete?y=<%= y %>&m=<%= m0+1 %>" onsubmit="return confirm('Rimuovere questo dipendente e tutte le sue presenze?');">
+                <button class="del-btn" type="submit" title="Rimuovi">✕</button>
+              </form>
+            </div>
+            <form class="rate-row" method="POST" action="/admin/employees/<%= r.emp.id %>/update?y=<%= y %>&m=<%= m0+1 %>">
+              <input type="hidden" name="name" value="<%= r.emp.name %>">
+              <input type="hidden" name="email" value="<%= r.emp.email %>">
+              <div class="rate-field">
+                <label>Lun–Ven €</label>
+                <input class="rate-input" type="number" name="rateWeek" step="0.01" min="0" value="<%= r.emp.rate_week %>">
+              </div>
+              <div class="rate-field">
+                <label>Sab/Dom €</label>
+                <input class="rate-input" type="number" name="rateWeekend" step="0.01" min="0" value="<%= r.emp.rate_weekend %>">
+              </div>
+              <button class="rate-save" type="submit" title="Salva tariffe">💾</button>
+            </form>
+          </td>
+          <% r.days.forEach(function(d){ %>
+            <td class="<%= d.weekend ? 'weekend' : '' %>">
+              <form class="inline" method="POST" action="/admin/attendance?y=<%= y %>&m=<%= m0+1 %>">
+                <input type="hidden" name="employeeId" value="<%= r.emp.id %>">
+                <input type="hidden" name="date" value="<%= y %>-<%= (m0+1).toString().padStart(2,'0') %>-<%= d.day.toString().padStart(2,'0') %>">
+                <input type="hidden" name="current" value="<%= d.status %>">
+                <input type="hidden" name="y" value="<%= y %>">
+                <input type="hidden" name="m" value="<%= m0+1 %>">
+                <button class="cell-btn <%= d.today ? 'today' : '' %>" data-status="<%= d.status %>" type="submit" title="<%= d.label %>"><%= d.status %></button>
+              </form>
+            </td>
+          <% }) %>
+          <td class="summary-col"><%= r.countP %></td>
+          <td class="summary-col"><%= r.countA %></td>
+          <td class="summary-col"><%= r.countF %></td>
+          <td class="summary-col"><%= r.countM %></td>
+          <td class="total-col">€ <%= r.total.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="name-col">Totale da pagare</td>
+          <td colspan="<%= headerDays.length + 4 %>"></td>
+          <td class="grand-total">€ <%= grandTotal.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+        </tr>
+      </tfoot>
+    </table>
+    <% } %>
+  </div>
+
+  <footer class="note glass">
+    I dipendenti vedono solo il proprio calendario, senza tariffe né totali: accedono con la propria email da <a href="/login"><%= '/login' %></a>.
+  </footer>
+</div>
+</body>
+</html>
