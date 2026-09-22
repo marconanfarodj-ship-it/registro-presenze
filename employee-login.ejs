@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accesso dipendente — Registro Presenze</title>
+<%- include('partials/head-icons') %>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap narrow">
+    <div class="glass card">
+      <div class="logo-mark">✉️</div>
+      <h1>Accesso dipendente</h1>
+      <p class="subtitle" style="margin-bottom:18px;">Inserisci la tua email: ti mandiamo un link per entrare, senza password.</p>
+      <form method="POST" action="/login">
+        <input type="email" name="email" placeholder="La tua email" required autofocus>
+        <button class="btn" type="submit">Invia link di accesso</button>
+      </form>
+      <% if (error) { %><p class="error-msg"><%= error %></p><% } %>
+      <p class="link-row"><a href="/">← torna alla scelta</a></p>
+    </div>
+  </div>
+</body>
+</html>

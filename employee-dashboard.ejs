@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le mie presenze — Registro Presenze</title>
+<%- include('partials/head-icons') %>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="glass">
+    <div class="brand">
+      <div class="logo-mark">📋</div>
+      <div>
+        <h1>Ciao, <%= employee.name %></h1>
+        <p class="subtitle">Questo è il tuo calendario presenze, in sola lettura.</p>
+      </div>
+    </div>
+    <div>
+      <div class="month-nav">
+        <a class="nav-btn" href="/me?y=<%= prev.y %>&m=<%= prev.m %>">‹</a>
+        <span class="label"><%= monthLabel %></span>
+        <a class="nav-btn" href="/me?y=<%= next.y %>&m=<%= next.m %>">›</a>
+      </div>
+      <p class="link-row" style="margin-top:6px;"><a href="/logout">esci</a></p>
+    </div>
+  </header>
+
+  <div class="summary-cards">
+    <div class="glass summary-card"><div class="num" style="color:var(--accent-p);"><%= countP %></div><div class="lbl">Presente</div></div>
+    <div class="glass summary-card"><div class="num" style="color:var(--accent-a);"><%= countA %></div><div class="lbl">Assente</div></div>
+    <div class="glass summary-card"><div class="num" style="color:var(--accent-f);"><%= countF %></div><div class="lbl">Ferie</div></div>
+    <div class="glass summary-card"><div class="num" style="color:var(--accent-m);"><%= countM %></div><div class="lbl">Malattia</div></div>
+  </div>
+
+  <div class="glass table-shell" style="padding: 10px;">
+    <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px;">
+      <% days.forEach(function(d){ %>
+        <div class="cell-view <%= d.today ? 'today' : '' %>" data-status="<%= d.status %>" title="<%= d.label %>" style="flex-direction:column; border-radius:10px; height:56px; <%= d.weekend ? 'opacity:0.9;' : '' %>">
+          <span style="font-size:0.62rem; color:var(--ink-soft); font-family:'IBM Plex Sans',sans-serif;"><%= d.dow %></span>
+          <span><%= d.day %></span>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <footer class="note glass">Le tue presenze sono inserite dall'amministratore. Se noti un errore, segnalalo direttamente a chi gestisce l'azienda.</footer>
+</div>
+</body>
+</html>
