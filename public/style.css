@@ -142,7 +142,11 @@ input[type="text"], input[type="email"], input[type="number"], input[type="passw
 }
 .btn.danger{ background: linear-gradient(160deg, rgba(230,90,60,0.9), rgba(180,50,40,0.9)); }
 
-.table-shell{ overflow-x: auto; }
+.table-shell{
+  overflow: auto;
+  max-height: 68vh;
+  -webkit-overflow-scrolling: touch;
+}
 table{ border-collapse: collapse; width: 100%; font-size: 0.82rem; }
 thead th{
   position: sticky; top:0; background: var(--glass-bg-strong);
