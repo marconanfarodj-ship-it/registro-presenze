@@ -27,6 +27,38 @@
   --accent-m-bg: rgba(140,120,240,0.26);
   --weekend-bg: rgba(255,255,255,0.22);
   --today-ring: #1b2430;
+  --bg-page-fallback: #eef1f6;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg-1: #10131c;
+    --bg-2: #1a1030;
+    --bg-3: #0c1f2a;
+    --bg-4: #201622;
+    --ink: #eef1f6;
+    --ink-soft: #a9b4c4;
+    --line: rgba(255,255,255,0.14);
+    --line-soft: rgba(255,255,255,0.08);
+
+    --glass-bg: rgba(30,34,48,0.45);
+    --glass-bg-strong: rgba(34,38,54,0.62);
+    --glass-border: rgba(255,255,255,0.16);
+    --glass-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    --glass-shadow-soft: 0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+
+    --accent-p: #7fe3bc;
+    --accent-p-bg: rgba(70,200,160,0.22);
+    --accent-a: #ff9c78;
+    --accent-a-bg: rgba(240,120,80,0.22);
+    --accent-f: #f2cf6e;
+    --accent-f-bg: rgba(255,196,70,0.20);
+    --accent-m: #b4a6ff;
+    --accent-m-bg: rgba(140,120,240,0.24);
+    --weekend-bg: rgba(255,255,255,0.05);
+    --today-ring: #eef1f6;
+    --bg-page-fallback: #10131c;
+  }
 }
 
 *{ box-sizing: border-box; }
@@ -42,7 +74,7 @@ body{
     radial-gradient(42vw 42vw at 92% 18%, var(--bg-2) 0%, transparent 68%),
     radial-gradient(40vw 40vw at 15% 92%, var(--bg-3) 0%, transparent 68%),
     radial-gradient(36vw 36vw at 88% 88%, var(--bg-4) 0%, transparent 70%),
-    #eef1f6;
+    var(--bg-page-fallback);
   background-attachment: fixed;
 }
 .wrap{ max-width: 1100px; margin: 0 auto; }
