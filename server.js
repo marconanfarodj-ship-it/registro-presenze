@@ -94,6 +94,7 @@ app.get("/admin", auth.requireAdmin, (req, res) => {
     employees, rows, headerDays, grandTotal,
     prev, next,
     STATUS_LABEL: du.STATUS_LABEL,
+    restoreError: req.query.restoreError === "1",
   });
 });
 
@@ -281,7 +282,7 @@ app.post(
       store.restoreAll({ employees: parsed.employees, attendance: parsed.attendance });
     } catch (err) {
       console.error("Ripristino fallito:", err.message);
-      // In caso di file non valido, semplicemente non tocchiamo i dati esistenti.
+      return res.redirect(backToMonth(req) + (backToMonth(req).includes("?") ? "&" : "?") + "restoreError=1");
     }
     res.redirect(backToMonth(req));
   }
