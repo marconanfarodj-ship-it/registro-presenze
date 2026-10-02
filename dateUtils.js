@@ -4,7 +4,7 @@ const MONTHS = [
 ];
 const DOW = ["L", "M", "M", "G", "V", "S", "D"];
 const STATUS_LABEL = { "": "—", P: "Presente", A: "Assente", F: "Ferie", M: "Malattia" };
-const STATUS_CYCLE = ["", "P", "A", "F", "M"];
+const STATUS_CYCLE = ["", "P", "A", "M"];
 
 function pad(n) {
   return n < 10 ? "0" + n : "" + n;
