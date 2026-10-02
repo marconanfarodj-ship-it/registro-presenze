@@ -57,7 +57,7 @@
     </div>
   </div>
 
-  <div class="glass table-shell">
+  <div class="glass table-shell" id="tableShell">
     <% if (employees.length === 0) { %>
       <div class="empty-state"><p>Nessun dipendente ancora. Aggiungine uno per iniziare.</p></div>
     <% } else { %>
@@ -74,7 +74,7 @@
       </thead>
       <tbody>
         <% rows.forEach(function(r){ %>
-        <tr>
+        <tr data-emp="<%= r.emp.id %>">
           <td class="name-col">
             <div class="emp-name-row">
               <div style="flex:1;">
@@ -111,11 +111,11 @@
               </form>
             </td>
           <% }) %>
-          <td class="summary-col"><%= r.countP %></td>
-          <td class="summary-col"><%= r.countA %></td>
-          <td class="summary-col"><%= r.countF %></td>
-          <td class="summary-col"><%= r.countM %></td>
-          <td class="total-col">€ <%= r.total.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+          <td class="summary-col" data-count="P"><%= r.countP %></td>
+          <td class="summary-col" data-count="A"><%= r.countA %></td>
+          <td class="summary-col" data-count="F"><%= r.countF %></td>
+          <td class="summary-col" data-count="M"><%= r.countM %></td>
+          <td class="total-col" data-total>€ <%= r.total.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
         </tr>
         <% }) %>
       </tbody>
@@ -123,7 +123,7 @@
         <tr>
           <td class="name-col">Totale da pagare</td>
           <td colspan="<%= headerDays.length + 4 %>"></td>
-          <td class="grand-total">€ <%= grandTotal.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
+          <td class="grand-total" id="grandTotal">€ <%= grandTotal.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}) %></td>
         </tr>
       </tfoot>
     </table>
@@ -134,5 +134,71 @@
     I dipendenti vedono solo il proprio calendario, senza tariffe né totali: accedono con la propria email da <a href="/login"><%= '/login' %></a>.
   </footer>
 </div>
+<script>
+(function(){
+  var shell = document.getElementById("tableShell");
+  var KEY = "presenze-scroll:<%= y %>-<%= m0+1 %>";
+  var euro = function(n){ return "€ " + Number(n).toLocaleString("it-IT",{minimumFractionDigits:2, maximumFractionDigits:2}); };
+
+  // Ripristina la posizione dopo un salvataggio (tariffe, nuovo dipendente, ecc.)
+  var saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(KEY)); sessionStorage.removeItem(KEY); } catch(e){}
+  if (shell && saved) {
+    shell.scrollLeft = saved.l; shell.scrollTop = saved.t; window.scrollTo(0, saved.w);
+  } else if (shell) {
+    // Prima apertura: porta in vista il giorno di oggi
+    var today = shell.querySelector(".cell-btn.today");
+    if (today) {
+      var nameCol = shell.querySelector("thead th.name-col");
+      var td = today.closest("td");
+      var offset = nameCol ? nameCol.offsetWidth : 0;
+      shell.scrollLeft = Math.max(0, td.offsetLeft - offset - (shell.clientWidth - offset) / 2 + td.offsetWidth / 2);
+    }
+  }
+  document.addEventListener("submit", function(){
+    if (!shell) return;
+    try { sessionStorage.setItem(KEY, JSON.stringify({ l: shell.scrollLeft, t: shell.scrollTop, w: window.scrollY })); } catch(e){}
+  }, true);
+
+  // Cambio stato della casella senza ricaricare la pagina
+  document.querySelectorAll("form .cell-btn").forEach(function(btn){
+    var form = btn.form;
+    form.addEventListener("submit", function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (btn.dataset.busy) return;
+      btn.dataset.busy = "1";
+      btn.style.opacity = "0.5";
+      fetch(form.action, {
+        method: "POST",
+        headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(new FormData(form)).toString(),
+        credentials: "same-origin"
+      }).then(function(res){
+        var ct = res.headers.get("Content-Type") || "";
+        if (!ct.includes("application/json")) { location.href = "/admin/login"; throw new Error("sessione"); }
+        return res.json();
+      }).then(function(data){
+        if (!data || !data.ok) throw new Error("errore");
+        btn.dataset.status = data.status;
+        btn.textContent = data.status;
+        btn.title = data.label;
+        form.querySelector('input[name="current"]').value = data.status;
+        var tr = btn.closest("tr");
+        ["P","A","F","M"].forEach(function(k){
+          var c = tr.querySelector('[data-count="'+k+'"]'); if (c) c.textContent = data["count"+k];
+        });
+        var t = tr.querySelector("[data-total]"); if (t) t.textContent = euro(data.total);
+        var g = document.getElementById("grandTotal"); if (g) g.textContent = euro(data.grandTotal);
+      }).catch(function(err){
+        if (err.message !== "sessione") alert("Non sono riuscito a salvare. Controlla la connessione e riprova.");
+      }).finally(function(){
+        delete btn.dataset.busy;
+        btn.style.opacity = "";
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>
