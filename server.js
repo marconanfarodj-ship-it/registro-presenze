@@ -46,6 +46,32 @@ app.get("/admin/logout", (req, res) => {
   res.redirect("/admin/login");
 });
 
+// Calcola la riga di un dipendente (giorni, conteggi, totale) per un mese
+function buildRow(emp, att, y, m0, nDays) {
+  let countP = 0, countA = 0, countF = 0, countM = 0;
+  let countPWeek = 0, countPWeekend = 0;
+  const days = [];
+  for (let d = 1; d <= nDays; d++) {
+    const key = du.dateKey(y, m0, d);
+    const status = att[key] || "";
+    if (status === "P") {
+      countP++;
+      if (du.isWeekend(y, m0, d)) countPWeekend++; else countPWeek++;
+    } else if (status === "A") countA++;
+    else if (status === "F") countF++;
+    else if (status === "M") countM++;
+    days.push({
+      day: d,
+      status,
+      weekend: du.isWeekend(y, m0, d),
+      today: du.isToday(y, m0, d),
+      label: `${d} ${du.MONTHS[m0]} — ${du.STATUS_LABEL[status]}`,
+    });
+  }
+  const total = countPWeek * emp.rate_week + countPWeekend * emp.rate_weekend;
+  return { emp, days, countP, countA, countF, countM, total };
+}
+
 app.get("/admin", auth.requireAdmin, (req, res) => {
   const { y, m0 } = du.resolveViewMonth(req.query);
   const employees = store.listEmployees();
@@ -53,31 +79,7 @@ app.get("/admin", auth.requireAdmin, (req, res) => {
   const monthPrefix = `${y}-${du.pad(m0 + 1)}`;
   const attendanceByEmp = store.getAllAttendanceForMonth(monthPrefix);
 
-  const rows = employees.map((emp) => {
-    const att = attendanceByEmp[emp.id] || {};
-    let countP = 0, countA = 0, countF = 0, countM = 0;
-    let countPWeek = 0, countPWeekend = 0;
-    const days = [];
-    for (let d = 1; d <= nDays; d++) {
-      const key = du.dateKey(y, m0, d);
-      const status = att[key] || "";
-      if (status === "P") {
-        countP++;
-        if (du.isWeekend(y, m0, d)) countPWeekend++; else countPWeek++;
-      } else if (status === "A") countA++;
-      else if (status === "F") countF++;
-      else if (status === "M") countM++;
-      days.push({
-        day: d,
-        status,
-        weekend: du.isWeekend(y, m0, d),
-        today: du.isToday(y, m0, d),
-        label: `${d} ${du.MONTHS[m0]} — ${du.STATUS_LABEL[status]}`,
-      });
-    }
-    const total = countPWeek * emp.rate_week + countPWeekend * emp.rate_weekend;
-    return { emp, days, countP, countA, countF, countM, total };
-  });
+  const rows = employees.map((emp) => buildRow(emp, attendanceByEmp[emp.id] || {}, y, m0, nDays));
 
   const grandTotal = rows.reduce((sum, r) => sum + r.total, 0);
 
@@ -142,6 +144,32 @@ app.post("/admin/attendance", auth.requireAdmin, (req, res) => {
   const idx = du.STATUS_CYCLE.indexOf(current);
   const next = du.STATUS_CYCLE[(idx + 1) % du.STATUS_CYCLE.length];
   store.setAttendance(employeeId, date, next);
+
+  // Se la richiesta arriva dalla pagina senza ricaricare, rispondiamo con i dati aggiornati
+  if ((req.get("Accept") || "").includes("application/json")) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date || "");
+    const emp = store.getEmployee(employeeId);
+    if (!match || !emp) return res.status(400).json({ ok: false });
+    const y = parseInt(match[1], 10), m0 = parseInt(match[2], 10) - 1, d = parseInt(match[3], 10);
+    const nDays = du.daysInMonth(y, m0);
+    const monthPrefix = `${y}-${du.pad(m0 + 1)}`;
+    const all = store.getAllAttendanceForMonth(monthPrefix);
+    let grandTotal = 0, row = null;
+    for (const e of store.listEmployees()) {
+      const r = buildRow(e, all[e.id] || {}, y, m0, nDays);
+      grandTotal += r.total;
+      if (e.id === employeeId) row = r;
+    }
+    return res.json({
+      ok: true,
+      status: next,
+      label: `${d} ${du.MONTHS[m0]} — ${du.STATUS_LABEL[next]}`,
+      countP: row.countP, countA: row.countA, countF: row.countF, countM: row.countM,
+      total: row.total,
+      grandTotal,
+    });
+  }
+
   res.redirect(backToMonth(req));
 });
 
